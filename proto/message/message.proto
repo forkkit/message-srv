@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+service Message {
+	rpc Create(CreateRequest) returns (CreateResponse) {}
+	rpc Update(UpdateRequest) returns (UpdateResponse) {}
+	rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+	rpc Search(SearchRequest) returns (SearchResponse) {}
+	rpc Stream(StreamRequest) returns (stream StreamResponse) {}
+	rpc Read(ReadRequest) returns (ReadResponse) {}
+}
+
+message Event {
+	// defaults to uuid
+	string id = 1;
+	// defaults to message
+	string type = 2;
+	// defaults to system
+	string from = 3;
+	// defaults to default
+	string namespace = 4;
+	// required
+	string channel = 5;
+	// required
+	string text = 6;
+	// defaults to now
+	int64 created = 7;
+	// defaults to now
+	int64 updated = 8;
+}
+
+message CreateRequest {
+	Event event = 1;
+}
+
+message CreateResponse {
+}
+
+message UpdateRequest {
+	Event event = 1;
+}
+
+message UpdateResponse {
+}
+
+message DeleteRequest {
+	string id = 1;
+	string namespace = 2;
+	string channel = 3;
+}
+
+message DeleteResponse {
+}
+
+message ReadRequest {
+	string id = 1;
+	string namespace = 2;
+	string channel = 3;
+}
+
+message ReadResponse {
+	Event event = 1;
+}
+
+message SearchRequest {
+	string query = 1;
+	string namespace = 2;
+	string channel = 3;
+	int64 limit = 4;
+	int64 offset = 5;
+	bool reverse = 6;
+}
+
+message SearchResponse {
+	repeated Event events = 1;
+}
+
+message StreamRequest {
+	string namespace = 1;
+	string channel = 2;
+}
+
+message StreamResponse {
+	Event event = 1;
+}
