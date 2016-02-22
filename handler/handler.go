@@ -30,9 +30,8 @@ func (m *Message) Create(ctx context.Context, req *proto.CreateRequest, rsp *pro
 		req.Event.Id = uuid.NewUUID().String()
 	}
 
-	if req.Event.Created == 0 {
-		req.Event.Created = time.Now().Unix()
-	}
+	req.Event.Created = time.Now().UnixNano()
+	req.Event.Updated = 0
 
 	if err := message.Create(req.Event); err != nil && err == message.ErrAlreadyExists {
 		return errors.BadRequest("go.micro.srv.message", err.Error())
@@ -64,9 +63,7 @@ func (m *Message) Update(ctx context.Context, req *proto.UpdateRequest, rsp *pro
 		return errors.BadRequest("go.micro.srv.message", "invalid timestamp")
 	}
 
-	if req.Event.Updated == 0 {
-		req.Event.Updated = time.Now().Unix()
-	}
+	req.Event.Updated = time.Now().UnixNano()
 
 	if err := message.Update(req.Event); err != nil {
 		return errors.InternalServerError("go.micro.srv.message", err.Error())

@@ -22,9 +22,9 @@ message Event {
 	string channel = 5;
 	// required
 	string text = 6;
-	// defaults to now
+	// defaults to now ; unix nano
 	int64 created = 7;
-	// defaults to now
+	// defaults to now ; unix nano
 	int64 updated = 8;
 }
 
