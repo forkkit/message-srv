@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	log "github.com/golang/glog"
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
@@ -21,6 +23,9 @@ var (
 func main() {
 	service := micro.NewService(
 		micro.Name("go.micro.srv.message"),
+
+		micro.RegisterTTL(time.Minute),
+		micro.RegisterInterval(time.Second*30),
 
 		micro.Flags(cli.StringFlag{
 			Name:   "sync_address",
