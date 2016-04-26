@@ -55,7 +55,6 @@ func newMemory(br broker.Broker, k kv.KV, lk sync.Sync) *memory {
 
 func Init(br broker.Broker, k kv.KV, lk sync.Sync) {
 	Default = newMemory(br, k, lk)
-	k.Start()
 	br.Connect()
 }
 
