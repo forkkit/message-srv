@@ -9,9 +9,9 @@ import (
 	"github.com/micro/message-srv/handler"
 	"github.com/micro/message-srv/message"
 
-	"github.com/micro/go-platform/kv"
-	"github.com/micro/go-platform/sync"
-	"github.com/micro/go-platform/sync/consul"
+	"github.com/micro/go-os/kv"
+	"github.com/micro/go-os/sync"
+	"github.com/micro/go-os/sync/consul"
 
 	proto "github.com/micro/message-srv/proto/message"
 )

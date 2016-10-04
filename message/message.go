@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/micro/go-micro/broker"
-	"github.com/micro/go-platform/kv"
-	"github.com/micro/go-platform/sync"
+	"github.com/micro/go-os/kv"
+	"github.com/micro/go-os/sync"
 	proto "github.com/micro/message-srv/proto/message"
 )
 
