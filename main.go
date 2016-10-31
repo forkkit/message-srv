@@ -11,7 +11,7 @@ import (
 
 	"github.com/micro/go-os/kv"
 	"github.com/micro/go-os/sync"
-	"github.com/micro/go-os/sync/consul"
+	"github.com/micro/go-plugins/sync/consul"
 
 	proto "github.com/micro/message-srv/proto/message"
 )
