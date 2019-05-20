@@ -1,7 +1,7 @@
 package message
 
 import (
-	proto "github.com/micro/message-srv/proto/message"
+	proto "github.com/microhq/message-srv/proto/message"
 )
 
 type sortedEvents struct {

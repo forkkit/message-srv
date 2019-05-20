@@ -10,15 +10,15 @@ import (
 	"time"
 
 	"github.com/micro/go-micro/broker"
-	"github.com/micro/go-os/kv"
-	"github.com/micro/go-os/sync"
-	proto "github.com/micro/message-srv/proto/message"
+	"github.com/micro/go-sync/data"
+	"github.com/micro/go-sync/lock"
+	proto "github.com/microhq/message-srv/proto/message"
 )
 
 type memory struct {
-	kv kv.KV
+	kv data.Data
 	br broker.Broker
-	lk sync.Sync
+	lk lock.Lock
 }
 
 // namespace:channel
@@ -45,7 +45,7 @@ func newName(n string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func newMemory(br broker.Broker, k kv.KV, lk sync.Sync) *memory {
+func newMemory(br broker.Broker, k data.Data, lk lock.Lock) *memory {
 	return &memory{
 		kv: k,
 		br: br,
@@ -53,7 +53,7 @@ func newMemory(br broker.Broker, k kv.KV, lk sync.Sync) *memory {
 	}
 }
 
-func Init(br broker.Broker, k kv.KV, lk sync.Sync) {
+func Init(br broker.Broker, k data.Data, lk lock.Lock) {
 	Default = newMemory(br, k, lk)
 	br.Connect()
 }
@@ -87,25 +87,21 @@ func (s *stream) key() string {
 }
 
 func (m *memory) Create(e *proto.Event) error {
-	lock, err := m.lk.Lock(e.Namespace + e.Channel)
-	if err != nil {
+	if err := m.lk.Acquire(e.Namespace + e.Channel); err != nil {
 		return err
 	}
-	if err := lock.Acquire(); err != nil {
-		return err
-	}
-	defer lock.Release()
+	defer m.lk.Release(e.Namespace + e.Channel)
 
 	// get the existing stream
-	item, err := m.kv.Get(e.Namespace + e.Channel)
-	if err != nil && err != kv.ErrNotFound {
+	item, err := m.kv.Read(e.Namespace + e.Channel)
+	if err != nil && err != data.ErrNotFound {
 		return err
 	}
 
 	var st *stream
 
 	// if not found create a new one
-	if err == kv.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil {
 		st = &stream{
 			Ns:     e.Namespace,
 			Ch:     e.Channel,
@@ -131,7 +127,7 @@ func (m *memory) Create(e *proto.Event) error {
 	}
 
 	// put back the stream
-	if err := m.kv.Put(&kv.Item{
+	if err := m.kv.Write(&data.Record{
 		Key:   st.key(),
 		Value: v,
 	}); err != nil {
@@ -153,25 +149,21 @@ func (m *memory) Create(e *proto.Event) error {
 }
 
 func (m *memory) Update(e *proto.Event) error {
-	lock, err := m.lk.Lock(e.Namespace + e.Channel)
-	if err != nil {
+	if err := m.lk.Acquire(e.Namespace + e.Channel); err != nil {
 		return err
 	}
-	if err := lock.Acquire(); err != nil {
-		return err
-	}
-	defer lock.Release()
+	defer m.lk.Release(e.Namespace + e.Channel)
 
 	// get the existing stream
-	item, err := m.kv.Get(e.Namespace + e.Channel)
-	if err != nil && err != kv.ErrNotFound {
+	item, err := m.kv.Read(e.Namespace + e.Channel)
+	if err != nil && err != data.ErrNotFound {
 		return err
 	}
 
 	var st *stream
 
 	// if not found create a new one
-	if err == kv.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil {
 		st = &stream{
 			Ns:     e.Namespace,
 			Ch:     e.Channel,
@@ -196,7 +188,7 @@ func (m *memory) Update(e *proto.Event) error {
 	item.Value = v
 
 	// put back the stream
-	if err := m.kv.Put(&kv.Item{
+	if err := m.kv.Write(&data.Record{
 		Key:   st.key(),
 		Value: v,
 	}); err != nil {
@@ -217,22 +209,18 @@ func (m *memory) Update(e *proto.Event) error {
 }
 
 func (m *memory) Delete(id, ns, ch string) error {
-	lock, err := m.lk.Lock(ns + ch)
-	if err != nil {
+	if err := m.lk.Acquire(ns + ch); err != nil {
 		return err
 	}
-	if err := lock.Acquire(); err != nil {
-		return err
-	}
-	defer lock.Release()
+	defer m.lk.Release(ns + ch)
 
 	// get the existing stream
-	item, err := m.kv.Get(ns + ch)
-	if err != nil && err != kv.ErrNotFound {
+	item, err := m.kv.Read(ns + ch)
+	if err != nil && err != data.ErrNotFound {
 		return err
 	}
 
-	if err == kv.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil {
 		return nil
 	}
 
@@ -254,26 +242,22 @@ func (m *memory) Delete(id, ns, ch string) error {
 	item.Value = v
 
 	// put back the stream
-	return m.kv.Put(item)
+	return m.kv.Write(item)
 }
 
 func (m *memory) Read(id, ns, ch string) (*proto.Event, error) {
-	lock, err := m.lk.Lock(ns + ch)
-	if err != nil {
+	if err := m.lk.Acquire(ns + ch); err != nil {
 		return nil, err
 	}
-	if err := lock.Acquire(); err != nil {
-		return nil, err
-	}
-	defer lock.Release()
+	defer m.lk.Release(ns + ch)
 
 	// get the existing stream
-	item, err := m.kv.Get(ns + ch)
-	if err != nil && err != kv.ErrNotFound {
+	item, err := m.kv.Read(ns + ch)
+	if err != nil && err != data.ErrNotFound {
 		return nil, err
 	}
 
-	if err == kv.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil {
 		return nil, ErrNotFound
 	}
 
@@ -292,22 +276,18 @@ func (m *memory) Read(id, ns, ch string) (*proto.Event, error) {
 }
 
 func (m *memory) Search(q, ns, ch string, limit, offset int, reverse bool) ([]*proto.Event, error) {
-	lock, err := m.lk.Lock(ns + ch)
-	if err != nil {
+	if err := m.lk.Acquire(ns + ch); err != nil {
 		return nil, err
 	}
-	if err := lock.Acquire(); err != nil {
-		return nil, err
-	}
-	defer lock.Release()
+	defer m.lk.Release(ns + ch)
 
 	// get the existing stream
-	item, err := m.kv.Get(ns + ch)
-	if err != nil && err != kv.ErrNotFound {
+	item, err := m.kv.Read(ns + ch)
+	if err != nil && err != data.ErrNotFound {
 		return nil, err
 	}
 
-	if err == kv.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil {
 		return nil, ErrNotFound
 	}
 

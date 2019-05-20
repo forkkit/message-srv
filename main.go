@@ -6,14 +6,15 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
-	"github.com/micro/message-srv/handler"
-	"github.com/micro/message-srv/message"
+	"github.com/microhq/message-srv/handler"
+	"github.com/microhq/message-srv/message"
 
-	"github.com/micro/go-os/kv"
-	"github.com/micro/go-os/sync"
-	"github.com/micro/go-plugins/sync/consul"
+	"github.com/micro/go-sync/data"
+	cdata "github.com/micro/go-sync/data/consul"
+	"github.com/micro/go-sync/lock"
+	clock "github.com/micro/go-sync/lock/consul"
 
-	proto "github.com/micro/message-srv/proto/message"
+	proto "github.com/microhq/message-srv/proto/message"
 )
 
 var (
@@ -44,12 +45,8 @@ func main() {
 
 	message.Init(
 		service.Server().Options().Broker,
-		kv.NewKV(
-			kv.Namespace("go.micro.srv.message"),
-			kv.Client(service.Client()),
-			kv.Server(service.Server()),
-		),
-		consul.NewSync(sync.Nodes(SyncAddress)),
+		cdata.NewData(data.Nodes(SyncAddress)),
+		clock.NewLock(lock.Nodes(SyncAddress)),
 	)
 
 	proto.RegisterMessageHandler(service.Server(), new(handler.Message))

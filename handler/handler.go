@@ -3,10 +3,10 @@ package handler
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/micro/go-micro/errors"
-	"github.com/micro/message-srv/message"
-	proto "github.com/micro/message-srv/proto/message"
-	"github.com/pborman/uuid"
+	"github.com/microhq/message-srv/message"
+	proto "github.com/microhq/message-srv/proto/message"
 
 	"golang.org/x/net/context"
 )
@@ -27,7 +27,7 @@ func (m *Message) Create(ctx context.Context, req *proto.CreateRequest, rsp *pro
 	}
 
 	if len(req.Event.Id) == 0 {
-		req.Event.Id = uuid.NewUUID().String()
+		req.Event.Id = uuid.New().String()
 	}
 
 	req.Event.Created = time.Now().UnixNano()
