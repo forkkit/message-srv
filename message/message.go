@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/micro/go-micro/broker"
@@ -51,6 +52,10 @@ func newMemory(br broker.Broker, k data.Data, lk lock.Lock) *memory {
 		br: br,
 		lk: lk,
 	}
+}
+
+func key(arg ...string) string {
+	return strings.Join(arg, "-")
 }
 
 func Init(br broker.Broker, k data.Data, lk lock.Lock) {
@@ -101,7 +106,7 @@ func (m *memory) Create(e *proto.Event) error {
 	var st *stream
 
 	// if not found create a new one
-	if err == data.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil || len(item.Value) == 0 {
 		st = &stream{
 			Ns:     e.Namespace,
 			Ch:     e.Channel,
@@ -163,7 +168,7 @@ func (m *memory) Update(e *proto.Event) error {
 	var st *stream
 
 	// if not found create a new one
-	if err == data.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil || len(item.Value) == 0 {
 		st = &stream{
 			Ns:     e.Namespace,
 			Ch:     e.Channel,
@@ -257,7 +262,7 @@ func (m *memory) Read(id, ns, ch string) (*proto.Event, error) {
 		return nil, err
 	}
 
-	if err == data.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil || len(item.Value) == 0 {
 		return nil, ErrNotFound
 	}
 
@@ -287,7 +292,7 @@ func (m *memory) Search(q, ns, ch string, limit, offset int, reverse bool) ([]*p
 		return nil, err
 	}
 
-	if err == data.ErrNotFound || item == nil {
+	if err == data.ErrNotFound || item == nil || len(item.Value) == 0 {
 		return nil, ErrNotFound
 	}
 

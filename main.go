@@ -45,8 +45,14 @@ func main() {
 
 	message.Init(
 		service.Server().Options().Broker,
-		cdata.NewData(data.Nodes(SyncAddress)),
-		clock.NewLock(lock.Nodes(SyncAddress)),
+		cdata.NewData(
+			data.Nodes(SyncAddress),
+			//data.Prefix("message-data"),
+		),
+		clock.NewLock(
+			lock.Nodes(SyncAddress),
+			lock.Prefix("message-lock"),
+		),
 	)
 
 	proto.RegisterMessageHandler(service.Server(), new(handler.Message))
